@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ title }} || {{ block.super }}{% endblock title %}
+
+{% block content %}
+    <div class="mt-5 profile-edit">
+        <div class="auth" style="min-height: auto; max-width: 200rem;">
+            <div class="card bg-dark text-white">
+                <div class="card-header">
+                    <h2>2FA Authentication</h2>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <button class="btn btn-primary" type="submit">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

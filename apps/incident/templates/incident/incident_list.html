@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ title }} || {{ block.super }}{% endblock title %}
+
+
+{% block content %}
+    <div class="row">
+        <div class="col-xl-12">
+            <div class="card">
+                <div class="card-body">
+                    {% include 'snippets/incident_filtering.html' %}
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body new-user">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                            <tr>
+                                <th class="border-top-0">শিরনাম</th>
+                                <th class="border-top-0">ঘটনার ধরণ</th>
+                                <th class="border-top-0">জড়িত ব্যক্তি/গোষ্ঠী/সংগঠন</th>
+                                <th class="border-top-0">বিভাগ</th>
+                                <th class="border-top-0">জেলা</th>
+                                <th class="border-top-0">ঘটনার তারিখ এবং সুময়</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for context in incident_context %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'incident:incident_detail' context.pk %}" class="btn btn-link">{{ context.title }}</a>
+                                    </td>
+                                    <td>
+                                        {{ context.incident_type }}
+                                    </td>
+                                    <td>
+                                        {{ context.involved_actor }}
+                                    </td>
+                                    <td>
+                                        {{ context.division }}
+                                    </td>
+                                    <td>
+                                        {{ context.district }}
+                                    </td>
+                                    <td>
+                                        {{ context.date }}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <hr/>
+                    {% include 'snippets/pagination.html' %}
+                </div><!--end card-body-->
+            </div><!--end card-->
+        </div><!--end col-->
+    </div>
+{% endblock %}
+
+

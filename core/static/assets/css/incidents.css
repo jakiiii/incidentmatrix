@@ -1,0 +1,14 @@
+.equal-card-height {
+    height: 500px;
+    display: flex;
+    flex-direction: column;
+}
+
+.equal-card-body {
+    flex: 0 0 auto;
+}
+
+.equal-card-list {
+    flex: 1 1 auto;
+    overflow-y: auto;
+}

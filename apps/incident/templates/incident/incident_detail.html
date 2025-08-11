@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ title }} || {{ block.super }}{% endblock title %}
+
+
+{% block content %}
+    <style>
+        .card-body {
+            min-height: 480px;
+        }
+
+        .scrollbar-custom {
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .scrollbar-custom::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .scrollbar-custom::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .scrollbar-custom::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+
+        .scrollbar-custom::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+
+    <div class="row">
+        <div class="col-lg-3">
+            <div class="card">
+                <div class="card-body" style="height: 480px;">
+                    <p class="h3">{{ incident.title }}</p>
+                    <p class="h6">রিপোর্ট: {{ incident.posted_by.get_full_name }}</p>
+                    <br/>
+                    তারিখ: {{ incident.date }}
+                    <hr/>
+                    <p class="">
+                        {% if incident.country %}রাষ্ট্র: {{ incident.country.name }}{% endif %}
+                        {% if incident.state %}, রাজ্য: {{ incident.state.name_bn }}{% endif %}
+                    </p>
+                    <p class="">
+                        {% if incident.division %}বিভাগ: {{ incident.division.name_bn }},{% endif %}
+                        {% if incident.district %}জেলা: {{ incident.district.name_bn }},{% endif %}
+                        {% if incident.subdistrict %}উপজেলা: {{ incident.subdistrict.name_bn }}{% endif %}
+                    </p>
+                    <hr/>
+                    <p class="">
+                        ঘটনার ধরণ: {{ incident.incident_type.name_bn }}
+                    </p>
+                    <p class="">
+                        জড়িত: {{ incident.involved_actor.name_bn }}
+                    </p>
+                    <hr/>
+                    <p class="">
+                        অক্ষাংশ (ল্যাটিচুয়েড): {{ incident.latitude }}<br/>
+                        দ্রাঘিমাংশ (লংগিচুয়েড): {{ incident.longitude }}
+                    </p>
+                </div>
+            </div>
+        </div><!--end col-->
+
+        <div class="col-lg-5">
+            <div class="card">
+                <div class="card-body">
+                    <div class="scrollbar-custom pr-1" style="height: 440px;">
+                        <h5 class="mt-0 font-14 mo-mt-2 m-b-15 text-muted">Incident Images</h5>
+                        <div class="d-flex flex-wrap">
+                            {% for context in incident.incident_images.all %}
+                                <div style="width: 25%; padding: 5px;">
+                                    <a class="image-popup-no-margins" href="{{ context.image.url }}">
+                                        <img class="img-fluid img-thumbnail" style="width: 180px; height: 180px;"
+                                             src="{{ context.image.url }}"
+                                             alt="{{ incident.title }}">
+                                    </a>
+                                </div>
+                            {% empty %}
+                                <p class="text-muted">No images found.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div><!--end col-->
+        <div class="col-lg-4">
+            <div class="card">
+        <div class="card-body d-flex flex-column">
+            <h5 class="mt-0 font-14 mo-mt-2 m-b-15 text-muted">Map</h5>
+            <div class="flex-grow-1">
+                <div id="incident-map" class="w-100 h-100 rounded border" style="min-height: 380px;"></div>
+            </div>
+        </div>
+    </div>
+        </div>
+    </div><!--end row-->
+    <div class="card">
+        <div class="card-header">
+            <p class="card-title">বিস্তারিত</p>
+        </div>
+        <div class="card-body">{{ incident.description|safe }}</div>
+    </div>
+
+    <script>
+        function initMap() {
+            const latitude = {{ incident.latitude|default:"0" }};
+            const longitude = {{ incident.longitude|default:"0" }};
+
+            const map = new google.maps.Map(document.getElementById("incident-map"), {
+                center: {lat: latitude, lng: longitude},
+                zoom: 8
+            });
+
+            new google.maps.Marker({
+                position: {lat: latitude, lng: longitude},
+                map: map,
+                title: "{{ incident.title|escapejs }}"
+            });
+        }
+    </script>
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCtSAR45TFgZjOs4nBFFZnII-6mMHLfSYI&callback=initMap" async defer></script>
+{% endblock %}

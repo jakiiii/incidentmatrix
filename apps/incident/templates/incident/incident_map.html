@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ title }} || {{ block.super }}{% endblock title %}
+
+
+{% block content %}
+    <div class="row">
+        <div class="col-md-3">
+            {% include 'snippets/map_filtering.html' %}
+        </div>
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="mt-0 header-title">Markers</h4>
+                    <div id="gmaps-markers" class="gmaps" style="width: 100%; height: 650px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function initMap() {
+            // Get incident data from Django context
+            const incidents = {{ incident_json|safe }};
+
+            // Create the map
+            const map = new google.maps.Map(document.getElementById("gmaps-markers"), {
+                zoom: 6,  // initial zoom
+                center: {lat: 23.6850, lng: 90.3563}, // default center (Bangladesh)
+            });
+
+            // Create bounds to fit all markers
+            const bounds = new google.maps.LatLngBounds();
+
+            // Loop through incidents and place markers
+            incidents.forEach(incident => {
+                const position = new google.maps.LatLng(incident.lat, incident.lng);
+
+                const marker = new google.maps.Marker({
+                    position: position,
+                    map: map,
+                    title: incident.title
+                });
+
+                const infowindow = new google.maps.InfoWindow({
+                    content: `
+                    <div>
+                        <strong>${incident.title}</strong><br/>
+                        ${incident.date}<br/>
+                        <div>${incident.description}</div>
+                    </div>
+                `
+                });
+
+                marker.addListener('click', () => {
+                    infowindow.open(map, marker);
+                });
+
+                bounds.extend(position);
+            });
+
+            // Adjust map to fit all markers
+            map.fitBounds(bounds);
+        }
+    </script>
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCtSAR45TFgZjOs4nBFFZnII-6mMHLfSYI&callback=initMap"
+            async defer></script>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui">
+        <title>School of инцидент</title>
+        <meta content="School of инцидент" name="description" />
+        <meta content="Mannatthemes" name="author" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+        <link rel="shortcut icon" href="{% static 'assets/images/favicon.ico' %}">
+
+        <!-- css -->
+        {% include 'base/css.html' %}
+
+    </head>
+
+
+    <body>
+
+        <!-- Begin page -->
+        <div class="accountbg"></div>
+        <div class="wrapper-page">
+
+            {% block frontblock_content %}{% endblock %}
+        </div>
+
+
+
+        <!-- js  -->
+        {% include 'base/js.html' %}
+
+    </body>
+</html>

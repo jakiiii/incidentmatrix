@@ -1,0 +1,26 @@
+
+# API
+1. Slider*
+2. Inventory*
+    - List*
+    - Detail*
+3. Brand Logo*
+4. Photo Gallery*
+5. Story
+6. Form [Ready to sell your card]*
+7. Contact*
+8. Social Media*
+9. People Talk About Us*
+
+
+## APP
+1. Inventory [done]
+2. Home [done]
+   - Slider [done]
+   - Social Media [done]
+   - Form [done]
+3. Gallery
+   - Photo Gallery
+4. Contact
+5. Story
+6. About

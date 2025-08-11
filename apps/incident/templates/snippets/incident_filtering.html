@@ -1,0 +1,232 @@
+{% load countries %}
+{% get_countries as countries %}
+
+<form method="get">
+    <!-- 🔍 Search & Date -->
+    <div class="align-items-center mb-3">
+        <div class="">
+            <div class="input-group">
+                <input type="text" name="q" placeholder="Search..." value="{{ search_query }}" class="form-control">
+                <div class="input-group-append">
+                    <button class="btn btn-outline-secondary" type="submit">
+                        <i class="fa fa-search"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="form-row align-items-center mb-3">
+        <div class="col-md-6 mb-2">
+            <div class="input-group">
+                <input type="text" name="start_date" id="startDate" value="{{ start_date }}" class="form-control" placeholder="dd/mm/yyyy">
+                <span class="mx-2">to</span>
+                <input type="text" name="end_date" id="endDate" value="{{ end_date }}" class="form-control" placeholder="dd/mm/yyyy">
+            </div>
+        </div>
+        <div class="col-md-6 mb-2">
+            <div class="input-group">
+                <input type="time" name="start_time" value="{{ start_time }}" class="form-control"
+                       placeholder="Start Time">
+                <span class="mx-2">to</span>
+                <input type="time" name="end_time" value="{{ end_time }}" class="form-control" placeholder="End Time">
+            </div>
+        </div>
+    </div>
+
+    <!-- 🌍 Country & Location Filters -->
+    <div class="form-row align-items-center mb-3">
+        <!-- Country -->
+        <div class="col-sm-3 mb-2">
+            <select class="custom-select" name="country_code" id="id_country">
+                <option value="">দেশ/রাষ্ট্র</option>
+                {% for context in countries %}
+                    <option value="{{ context.code }}" {% if context.code == selected_country_code %}selected{% endif %}>{{ context.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Division -->
+        <div class="col-sm-3 mb-2">
+            <select class="custom-select" name="division_id" id="divisionSelect">
+                <option value="">বিভাগ</option>
+                {% for context in division_context %}
+                    <option value="{{ context.id }}"
+                            {% if context.id|stringformat:"s" == selected_division_id %}selected{% endif %}>{{ context.name_bn }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- District -->
+        <div class="col-sm-3 mb-2">
+            <select class="custom-select" name="district_id" id="districtSelect">
+                <option value="">জেলা</option>
+                {% for context in district_context %}
+                    {% if not selected_division_id or context.division_id|stringformat:"s" == selected_division_id %}
+                        <option value="{{ context.id }}"
+                                {% if context.id|stringformat:"s" == selected_district_id %}selected{% endif %}>
+                            {{ context.name_bn }}
+                        </option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Subdistrict -->
+        <div class="col-sm-3 mb-2">
+            <select class="custom-select" name="subdistrict_id" id="subdistrictSelect">
+                <option value="">উপজেলা</option>
+                {% for context in subdistrict_context %}
+                    <option value="{{ context.id }}"
+                            {% if context.id|stringformat:"s" == selected_subdistrict_id %}selected{% endif %}>
+                        {{ context.name_bn }}{% if context.name_en %} ({{ context.name_en }}){% endif %}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <!-- 🏙️ State & Other Filters -->
+    <div class="form-row align-items-center mb-3">
+        <!-- State -->
+        <div class="col-sm-3 mb-2">
+            <select class="custom-select" name="state_id" id="id_state">
+                <option value="">স্টেট/রাজ্য</option>
+                {% for context in state_context %}
+                    <option value="{{ context.id }}"
+                            {% if context.id|stringformat:"s" == selected_state_id %}selected{% endif %}>{{ context.name_bn }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Incident Type -->
+        <div class="col-sm-3 mb-2">
+            <select class="custom-select" name="incident_type_id">
+                <option value="">ঘটনার ধরণ</option>
+                {% for context in incident_type_context %}
+                    <option value="{{ context.id }}"
+                            {% if context.id|stringformat:"s" == selected_incident_type_id %}selected{% endif %}>{{ context.name_bn }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Involved Actor -->
+        <div class="col-sm-3 mb-2">
+            <select class="custom-select" name="involved_actor_id">
+                <option value="">জড়িত ব্যক্তি/গোষ্ঠী/সংগঠন</option>
+                {% for context in incident_actor_context %}
+                    <option value="{{ context.id }}"
+                            {% if context.id|stringformat:"s" == selected_involved_actor_id %}selected{% endif %}>{{ context.name_bn }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Buttons -->
+        <div class="col-sm-3 mb-2">
+            <div class="row">
+                <div class="col-4">
+                    <button type="submit" class="btn btn-block btn-primary">ফিল্টার</button>
+                </div>
+                <div class="col-4">
+                    <button type="submit" class="btn btn-block btn-info">প্রিন্ট</button>
+                </div>
+                <div class="col-4">
+                    <a href="?reset=true" class="btn btn-block btn-secondary">রিসেট</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        flatpickr("#startDate", {
+            dateFormat: "d/m/Y",
+            allowInput: true
+        });
+
+        flatpickr("#endDate", {
+            dateFormat: "d/m/Y",
+            allowInput: true
+        });
+    });
+</script>
+
+<script>
+    // location-filters.js
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const countrySelect = document.getElementById('id_country');
+        const divisionSelect = document.getElementById('divisionSelect');
+        const districtSelect = document.getElementById('districtSelect');
+        const subdistrictSelect = document.getElementById('subdistrictSelect');
+        const stateSelect = document.getElementById('id_state');
+
+        const clearSelect = (selectElement) => {
+            selectElement.innerHTML = '<option value="">---</option>';
+        };
+
+        const populateSelect = (selectElement, data, selectedId = null) => {
+            clearSelect(selectElement);
+            data.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.id;
+                option.textContent = item.name_bn;
+                if (selectedId && selectedId == item.id) {
+                    option.selected = true;
+                }
+                selectElement.appendChild(option);
+            });
+        };
+
+        divisionSelect.addEventListener('change', function () {
+            const divisionId = this.value;
+            if (divisionId) {
+                fetch(`/location/ajax/get-districts/?division_id=${divisionId}`)
+                    .then(response => response.json())
+                    .then(data => populateSelect(districtSelect, data));
+            }
+        });
+
+        districtSelect.addEventListener('change', function () {
+            const districtId = this.value;
+            if (districtId) {
+                fetch(`/location/ajax/subdistricts/?district_id=${districtId}`)
+                    .then(response => response.json())
+                    .then(data => populateSelect(subdistrictSelect, data));
+
+                fetch(`/location/ajax/district/${districtId}/division/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        divisionSelect.value = data.division_id;
+                    });
+            }
+        });
+
+        subdistrictSelect.addEventListener('change', function () {
+            const subdistrictId = this.value;
+            if (subdistrictId) {
+                fetch(`/location/ajax/subdistrict/${subdistrictId}/parent/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        districtSelect.value = data.district_id;
+                        divisionSelect.value = data.division_id;
+                    });
+            }
+        });
+
+        // Handle country selection
+        countrySelect.addEventListener('change', function () {
+            const isBangladesh = this.value === 'BD';
+            divisionSelect.disabled = !isBangladesh;
+            districtSelect.disabled = !isBangladesh;
+            subdistrictSelect.disabled = !isBangladesh;
+            stateSelect.disabled = isBangladesh;
+        });
+
+        // Trigger logic on load
+        if (countrySelect) {
+            const event = new Event('change');
+            countrySelect.dispatchEvent(event);
+        }
+    });
+</script>

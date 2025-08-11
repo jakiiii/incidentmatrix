@@ -1,0 +1,45 @@
+{% extends 'base_front.html' %}
+{% load static %}
+{% block title %}{{ title }} || {{ block.super }}{% endblock title %}
+
+
+{% block content %}
+    <form style="width: 100%;" method="post" action="{% url 'accounts:registration' %}">{% csrf_token %}
+        <div class="mb-4 name-fields">
+            <input placeholder="First name" type="text" class="input" required name="first_name" value="{% if form.first_name.value %}{{ form.first_name.value }}{% endif %}">
+            {{ form.first_name.errors }}
+            <input placeholder="Last name" type="text" class="input" required name="last_name" value="{% if form.last_name.value %}{{ form.last_name.value }}{% endif %}">
+            {{ form.last_name.errors }}
+        </div>
+        <input placeholder="Username" type="text" class="mb-4 input" required name="username" value="{% if form.username.value %}{{ form.username.value }}{% endif %}">
+        {{ form.username.errors }}
+
+        <input placeholder="Email" type="email" class="mb-4 input" required name="email" value="{% if form.email.value %}{{ form.email.value }}{% endif %}">
+        {{ form.email.errors }}
+
+        <div class="password mb-4">
+            <input placeholder="Password" type="password" required class="input password-input" name="password"/>
+            {{ form.password.errors }}
+            <button type="button" class="pass-eye" id="toggle-password">
+                <i class="bi bi-eye"></i>
+            </button>
+        </div>
+
+        <div class="password">
+            <input placeholder="Confirm Password" type="password" required class="input password-input" name="confirm_password"/>
+            {{ form.confirm_password.errors }}
+            <button type="button" class="pass-eye" id="toggle-password">
+                <i class="bi bi-eye"></i>
+            </button>
+        </div>
+
+        <p class="text-end pt-2"><a href="{% url 'accounts:login' %}">Already have an account? Sign in</a></p>
+
+        <div class="form-check">
+            <input class="form-check-input custom-checkbox" required type="checkbox" value="" id="privacy-policy" name="privacy_policy">
+            <a href="{% url 'utility:terms' %}" class="form-check-label" target="_blank" style="color: #F0F0F0; font-size: 0.9rem; text-decoration: none;">I accept the terms of use and privacy policy</a>
+        </div>
+
+        <button class="action mt-3">Sign Up</button>
+    </form>
+{% endblock %}

@@ -1,0 +1,72 @@
+from datetime import timedelta
+from ipware import get_client_ip
+from django.conf import settings
+from django.shortcuts import render
+from django.contrib import messages
+from django.core.cache import cache
+from django.http import JsonResponse
+from django.utils.timezone import now
+
+from django.shortcuts import redirect
+from django.urls import reverse_lazy
+from django.contrib.auth.mixins import AccessMixin
+
+
+class RateLimitMixin:
+    # Set default rate limit: 5 requests per hour
+    max_requests = 5
+    rate_limit_period = timedelta(hours=1)
+    cache_prefix = "rate_limit"
+
+    def get_cache_key(self):
+        """
+        Generate a unique cache key for the user or IP address.
+        Override this method if you want custom cache key logic.
+        """
+        if self.request.user.is_authenticated:
+            return f"{self.cache_prefix}_user_{self.request.user.pk}"
+        else:
+            ip_address, _ = get_client_ip(self.request)
+            return f"{self.cache_prefix}_ip_{ip_address}"
+
+    def has_exceeded_rate_limit(self):
+        """
+        Check if the request count has exceeded the rate limit.
+        """
+        cache_key = self.get_cache_key()
+        request_times = cache.get(cache_key, [])
+
+        # Filter out requests that are older than the rate limit period
+        recent_requests = [req_time for req_time in request_times if now() - req_time < self.rate_limit_period]
+
+        # Update the cache with filtered request times
+        cache.set(cache_key, recent_requests, timeout=self.rate_limit_period.seconds)
+
+        # Return True if the number of requests has exceeded the max_requests
+        return len(recent_requests) >= self.max_requests
+
+    def add_request_to_cache(self):
+        """
+        Add the current request timestamp to the cache.
+        """
+        cache_key = self.get_cache_key()
+        request_times = cache.get(cache_key, [])
+        request_times.append(now())
+        cache.set(cache_key, request_times, timeout=self.rate_limit_period.seconds)
+
+    def dispatch(self, request, *args, **kwargs):
+        """
+        Override the dispatch method to check rate limit before proceeding.
+        """
+        if self.has_exceeded_rate_limit():
+            # Rate limit exceeded, show an error message or return a custom response
+            messages.error(request, "You have exceeded the maximum number of allowed requests. Please try again later.")
+            if request.is_ajax():
+                return JsonResponse({'error': 'Rate limit exceeded'}, status=429)
+            return render(request, 'rate_limit_error.html', status=429)
+
+        # Add the current request to the cache
+        self.add_request_to_cache()
+
+        # Proceed with the normal dispatch if rate limit is not exceeded
+        return super().dispatch(request, *args, **kwargs)

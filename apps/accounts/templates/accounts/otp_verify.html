@@ -1,0 +1,24 @@
+{% extends 'base_front.html' %}
+{% load static %}
+{% block title %}OTP Verification{% endblock %}
+
+{% block content %}
+    <div class="otp-verification">
+        <h2>Enter OTP</h2>
+        <p>An OTP has been sent to your registered email address.</p>
+
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="alert alert-danger">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="post" action="{% url 'accounts:verify_otp' %}">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-primary">Verify OTP</button>
+        </form>
+    </div>
+{% endblock %}
