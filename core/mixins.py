@@ -12,6 +12,26 @@ from django.urls import reverse_lazy
 from django.contrib.auth.mixins import AccessMixin
 
 
+class AdministratorRequiredMixin(AccessMixin):
+    """Verify that the current user is a staff user."""
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        if not request.user.is_administrator:
+            return redirect(reverse_lazy('accounts:permission_denied'))
+        return super().dispatch(request, *args, **kwargs)
+
+
+class OperatorRequiredMixin(AccessMixin):
+    """Verify that the current user is an operator user."""
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        if not getattr(request.user, 'is_operator', False):
+            return redirect(reverse_lazy('accounts:permission_denied'))
+        return super().dispatch(request, *args, **kwargs)
+
+
 class RateLimitMixin:
     # Set default rate limit: 5 requests per hour
     max_requests = 5

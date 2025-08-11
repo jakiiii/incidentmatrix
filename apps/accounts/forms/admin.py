@@ -43,6 +43,7 @@ class UserAdminChangeForm(forms.ModelForm):
             'is_active',
             'is_staff',
             'is_superuser',
+            'is_administrator',
             'is_operator',
         )
 

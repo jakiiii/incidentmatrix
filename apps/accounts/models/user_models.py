@@ -6,7 +6,7 @@ from django.contrib.auth.models import AbstractUser, BaseUserManager
 
 class UserManager(BaseUserManager):
     def create_user(self, username, first_name, last_name, password=None, is_active=True, is_staff=False,
-                    is_superuser=False, is_operator=False):
+                    is_superuser=False, is_administrator=False, is_operator=False):
         if not first_name:
             raise ValueError("Please, type your first name.")
         if not last_name:
@@ -24,6 +24,7 @@ class UserManager(BaseUserManager):
         user.is_active = is_active
         user.is_superuser = is_superuser
         user.is_staff = is_staff
+        user.is_administrator = is_administrator
         user.is_operator = is_operator
         user.save(using=self._db)
         return user
@@ -47,6 +48,7 @@ class UserManager(BaseUserManager):
             password=password,
             is_staff=True,
             is_superuser=True,
+            is_administrator=True,
             is_operator=True,
         )
         return user
@@ -57,6 +59,10 @@ class User(AbstractUser):
         unique=True,
         verbose_name=_("Email Address"),
         db_collation='und-x-icu',
+    )
+    is_administrator = models.BooleanField(
+        default=False,
+        verbose_name=_("Is Administrator"),
     )
     is_operator = models.BooleanField(
         default=False,

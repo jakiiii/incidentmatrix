@@ -12,7 +12,7 @@ from django.views.generic  import (
     TemplateView, ListView, DetailView
 )
 
-from braces.views import LoginRequiredMixin
+from core.mixins import AdministratorRequiredMixin
 
 from apps.location.models import (
     Division, District, Subdistrict, State
@@ -30,7 +30,7 @@ def parse_custom_date(date_str):
         return None
 
 
-class IncidentListView(LoginRequiredMixin, ListView):
+class IncidentListView(AdministratorRequiredMixin, ListView):
     model = Incident
     context_object_name = 'incident_context'
     template_name = 'incident/incident_list.html'
@@ -117,7 +117,7 @@ class IncidentListView(LoginRequiredMixin, ListView):
         return context
 
 
-class IncidentDetailView(LoginRequiredMixin, DetailView):
+class IncidentDetailView(AdministratorRequiredMixin, DetailView):
     model = Incident
     template_name = 'incident/incident_detail.html'
     context_object_name = 'incident'
@@ -128,7 +128,7 @@ class IncidentDetailView(LoginRequiredMixin, DetailView):
         return context
 
 
-class IncidentMapView(LoginRequiredMixin, TemplateView):
+class IncidentMapView(AdministratorRequiredMixin, TemplateView):
     template_name = 'incident/incident_map.html'
 
     def get_context_data(self, **kwargs):

@@ -12,7 +12,7 @@ class UserAdmin(UserAdmin):
     form = UserAdminChangeForm
     model = User
 
-    list_display = ['username', 'first_name', 'last_name', 'email', 'is_superuser', 'is_staff', 'is_operator', 'is_active']
+    list_display = ['username', 'first_name', 'last_name', 'email', 'is_superuser', 'is_staff', 'is_administrator', 'is_operator', 'is_active']
     list_filter = ['is_superuser', 'is_staff']
     search_fields = ['username', 'email', 'first_name', 'last_name']
     readonly_fields = ['last_login', 'date_joined']
@@ -20,14 +20,14 @@ class UserAdmin(UserAdmin):
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
         ('Personal Info', {'fields': ('first_name', 'last_name', 'email')}),
-        ('Permissions', {'fields': ('is_active', 'is_superuser', 'is_staff', 'is_operator',)}),
+        ('Permissions', {'fields': ('is_active', 'is_superuser', 'is_staff', 'is_administrator', 'is_operator',)}),
         ('Others', {'fields': ('last_login', 'date_joined')}),
     )
 
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('username', 'email', 'password1', 'password2', 'is_active', 'is_superuser', 'is_staff', 'is_operator')}
+            'fields': ('username', 'email', 'password1', 'password2', 'is_active', 'is_superuser', 'is_staff', 'is_administrator', 'is_operator')}
          ),
     )
 

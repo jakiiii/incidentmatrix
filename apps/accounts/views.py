@@ -140,3 +140,12 @@ class LogoutView(View):
         response.delete_cookie('otp_verified')
 
         return response
+
+
+class PermissionDeniedView(LoginRequiredMixin, TemplateView):
+    template_name = "accounts/permission_denied.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = "Permission Denied"
+        return context

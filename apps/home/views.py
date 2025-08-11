@@ -7,7 +7,7 @@ from django.utils.timezone import now
 from django.views.generic import TemplateView
 from django.db.models.functions import TruncMonth
 
-from django.contrib.auth.mixins import LoginRequiredMixin
+from core.mixins import AdministratorRequiredMixin
 
 from apps.location.models import (
     Division, District
@@ -22,7 +22,7 @@ def get_random_color():
     return "#%06x" % random.randint(0, 0xFFFFFF)
 
 
-class HomeView(LoginRequiredMixin, TemplateView):
+class HomeView(AdministratorRequiredMixin, TemplateView):
     template_name = 'home/home.html'
 
     def get_context_data(self, **kwargs):
