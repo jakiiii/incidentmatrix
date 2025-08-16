@@ -1,0 +1,412 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load countries %}
+{% get_countries as countries %}
+{% block title %}{{ title }} || {{ block.super }}{% endblock title %}
+
+
+{% block content %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="mt-0 header-title">{{ title }}</h4>
+                    <hr/>
+
+                    <form method="post" enctype="multipart/form-data" id="incidentCreateForm">
+                        {% csrf_token %}
+
+                        <!-- Country -->
+                        <div class="form-group row">
+                            <label class="col-sm-2 col-form-label">রাষ্ট্র/দেশ</label>
+                            <div class="col-sm-10">
+                                {{ form.country }}
+                                {% for e in form.country.errors %}
+                                    <div class="text-danger">{{ e }}</div>{% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- State (non-BD) -->
+                        <div class="form-group row" id="wrap_state">
+                            <label class="col-sm-2 col-form-label">স্টেট/রাজ্য</label>
+                            <div class="col-sm-10">
+                                {{ form.state }}
+                                {% for e in form.state.errors %}
+                                    <div class="text-danger">{{ e }}</div>{% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Division (BD only) -->
+                        <div class="form-group row" id="wrap_division">
+                            <label class="col-sm-2 col-form-label">বিভাগের নাম</label>
+                            <div class="col-sm-10">
+                                {{ form.division }}
+                                {% for e in form.division.errors %}
+                                    <div class="text-danger">{{ e }}</div>{% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- District -->
+                        <div class="form-group row" id="wrap_district">
+                            <label class="col-sm-2 col-form-label">জেলার নাম</label>
+                            <div class="col-sm-10">
+                                {{ form.district }}
+                                {% for e in form.district.errors %}
+                                    <div class="text-danger">{{ e }}</div>{% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Subdistrict -->
+                        <div class="form-group row" id="wrap_subdistrict">
+                            <label class="col-sm-2 col-form-label">উপজেলার নাম</label>
+                            <div class="col-sm-10">
+                                {{ form.subdistrict }}
+                                {% for e in form.subdistrict.errors %}
+                                    <div class="text-danger">{{ e }}</div>{% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Title -->
+                        <div class="form-group row">
+                            <label class="col-sm-2 col-form-label">শিরনাম</label>
+                            <div class="col-sm-10">
+                                {{ form.title }}
+                                {% for e in form.title.errors %}
+                                    <div class="text-danger">{{ e }}</div>{% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Incident type -->
+                        <div class="form-group row">
+                            <label class="col-sm-2 col-form-label">ঘটনার ধরণ</label>
+                            <div class="col-sm-10">
+                                {{ form.incident_type }}
+                                {% for e in form.incident_type.errors %}
+                                    <div class="text-danger">{{ e }}</div>{% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Involved actor -->
+                        <div class="form-group row">
+                            <label class="col-sm-2 col-form-label">জড়িত ব্যক্তি/গোষ্ঠী/সংগঠন</label>
+                            <div class="col-sm-10">
+                                {{ form.involved_actor }}
+                                {% for e in form.involved_actor.errors %}
+                                    <div class="text-danger">{{ e }}</div>{% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Lat/Lng -->
+                        <div class="form-group row">
+                            <label class="col-sm-2 col-form-label">অক্ষাংশ (ল্যাটিচুয়েড)</label>
+                            <div class="col-sm-10">
+                                {{ form.latitude }}
+                                {% for e in form.latitude.errors %}
+                                    <div class="text-danger">{{ e }}</div>{% endfor %}
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-sm-2 col-form-label">দ্রাঘিমাংশ (লংগিচুয়েড)</label>
+                            <div class="col-sm-10">
+                                {{ form.longitude }}
+                                {% for e in form.longitude.errors %}
+                                    <div class="text-danger">{{ e }}</div>{% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Date/time -->
+                        <div class="form-group row">
+                            <label class="col-sm-2 col-form-label">ঘটনার তারিখ এবং সুময়</label>
+                            <div class="col-sm-10">
+                                {{ form.date }}
+                                {% for e in form.date.errors %}
+                                    <div class="text-danger">{{ e }}</div>{% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="form-group row">
+                            <label class="col-sm-2 col-form-label">বিস্তারিত</label>
+                            <div class="col-sm-10">
+                                {{ form.description }}
+                                {% for e in form.description.errors %}
+                                    <div class="text-danger">{{ e }}</div>{% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label class="col-sm-2 col-form-label"></label>
+                            <div class="col-sm-10">
+                                <button type="submit" class="btn btn-block btn-primary">যুক্ত করুন</button>
+                            </div>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(function () {
+            // 1) Init Select2 once
+            $('.select2').select2({
+                width: '100%',
+                placeholder: "Select an option",
+                allowClear: true
+            });
+
+            // 2) Cache elements (jQuery + wrappers)
+            const $country = $('#id_country');
+            const $state = $('#id_state');
+            const $division = $('#id_division');
+            const $district = $('#id_district');
+            const $subdistrict = $('#id_subdistrict');
+
+            const $wrapState = $('#wrap_state');
+            const $wrapDivision = $('#wrap_division');
+            const $wrapDistrict = $('#wrap_district');
+            const $wrapSubdistrict = $('#wrap_subdistrict');
+
+            // Helpers
+            function disable($el, on) {
+                $el.prop('disabled', !!on).trigger('change.select2');
+            }
+
+            function show($wrap) {
+                $wrap.show();
+            }
+
+            function hide($wrap) {
+                $wrap.hide();
+            }
+
+            function clearSelect($el, placeholderText) {
+                $el.empty().append(new Option(placeholderText || 'Select…', '', true, false))
+                    .val(null).trigger('change.select2');
+            }
+
+            function fillSelect($el, items, placeholderText, valueKey, textKey) {
+                const opts = [new Option(placeholderText || 'Select…', '', true, false)];
+                items.forEach(it => {
+                    opts.push(new Option(it[textKey], it[valueKey], false, false));
+                });
+                $el.empty().append(opts).val(null).trigger('change.select2');
+            }
+
+            // 3) Country-controlled visibility
+            function toggleByCountry() {
+                const code = $country.val();  // ISO-2 code, e.g. "BD"
+                if (code === 'BD') {
+                    // Bangladesh: use Division -> District -> Subdistrict, hide State
+                    hide($wrapState);
+                    show($wrapDivision);
+                    show($wrapDistrict);
+                    show($wrapSubdistrict);
+
+                    disable($state, true);
+                    disable($division, false);
+                    disable($district, false);
+                    disable($subdistrict, false);
+
+                    // Clear state and ensure BD chain visible
+                    clearSelect($state, 'স্টেট/রাজ্য');
+                } else if (code) {
+                    // Other country: use State, hide BD chain
+                    show($wrapState);
+                    hide($wrapDivision);
+                    hide($wrapDistrict);
+                    hide($wrapSubdistrict);
+
+                    disable($state, false);
+                    disable($division, true);
+                    disable($district, true);
+                    disable($subdistrict, true);
+
+                    // Clear BD chain
+                    clearSelect($division, 'বিভাগ');
+                    clearSelect($district, 'জেলা');
+                    clearSelect($subdistrict, 'উপজেলা');
+                } else {
+                    // No country selected: show everything enabled
+                    show($wrapState);
+                    show($wrapDivision);
+                    show($wrapDistrict);
+                    show($wrapSubdistrict);
+                    disable($state, false);
+                    disable($division, false);
+                    disable($district, false);
+                    disable($subdistrict, false);
+                }
+            }
+
+            // 4) Dependent selects
+            $division.on('change', function () {
+                const divisionId = $(this).val();
+                clearSelect($district, 'জেলা');
+                clearSelect($subdistrict, 'উপজেলা');
+                if (!divisionId) return;
+
+                fetch(`/location/ajax/get-districts/?division_id=${divisionId}`)
+                    .then(r => r.json())
+                    .then(rows => fillSelect($district, rows, 'জেলা', 'id', 'name_bn'))
+                    .catch(() => clearSelect($district, 'জেলা'));
+            });
+
+            $district.on('change', function () {
+                const districtId = $(this).val();
+                clearSelect($subdistrict, 'উপজেলা');
+                if (!districtId) return;
+
+                fetch(`/location/ajax/subdistricts/?district_id=${districtId}`)
+                    .then(r => r.json())
+                    .then(rows => fillSelect($subdistrict, rows, 'উপজেলা', 'id', 'name_bn'))
+                    .catch(() => clearSelect($subdistrict, 'উপজেলা'));
+            });
+
+            // 5) Wire country change & set initial state
+            $country.on('change', toggleByCountry);
+            toggleByCountry();
+
+            // 6) (Optional) flatpickr for datetime field
+            const dtId = '{{ form.date.id_for_label|escapejs }}';
+            if (dtId && window.flatpickr) {
+                flatpickr('#' + dtId, {enableTime: true, dateFormat: "Y-m-d\\TH:i"});
+            }
+        });
+    </script>
+
+    {#    <script>#}
+    {#        $(document).ready(function () {#}
+    {##}
+    {#            $('.select2').select2({#}
+    {#                width: '100%',#}
+    {#                placeholder: "Select an option",#}
+    {#                allowClear: true#}
+    {#            });#}
+    {#        });#}
+    {#    </script>#}
+
+    {#    <script>#}
+    {#        // Helpers#}
+    {#        function show(el) {#}
+    {#            el.style.display = '';#}
+    {#        }#}
+    {##}
+    {#        function hide(el) {#}
+    {#            el.style.display = 'none';#}
+    {#        }#}
+    {##}
+    {#        document.addEventListener('DOMContentLoaded', function () {#}
+    {#            // DateTime picker (optional)#}
+    {#            const dateInput = document.getElementById('{{ form.date.id_for_label }}');#}
+    {#            if (dateInput && window.flatpickr) {#}
+    {#                flatpickr(dateInput, {enableTime: true, dateFormat: "Y-m-d\\TH:i"});#}
+    {#            }#}
+    {##}
+    {#            const countryEl = document.getElementById('id_country');#}
+    {#            const stateWrap = document.getElementById('wrap_state');#}
+    {#            const stateEl = document.getElementById('id_state');#}
+    {##}
+    {#            const divisionWrap = document.getElementById('wrap_division');#}
+    {#            const divisionEl = document.getElementById('id_division');#}
+    {##}
+    {#            const districtWrap = document.getElementById('wrap_district');#}
+    {#            const districtEl = document.getElementById('id_district');#}
+    {##}
+    {#            const subdistrictWrap = document.getElementById('wrap_subdistrict');#}
+    {#            const subdistrictEl = document.getElementById('id_subdistrict');#}
+    {##}
+    {#            function toggleByCountry() {#}
+    {#                const val = countryEl.value; // ISO alpha-2 (e.g., "BD")#}
+    {#                if (val === 'BD') {#}
+    {#                    // Bangladesh: show BD hierarchy, hide state#}
+    {#                    hide(stateWrap);#}
+    {#                    show(divisionWrap);#}
+    {#                    show(districtWrap);#}
+    {#                    show(subdistrictWrap);#}
+    {##}
+    {#                    // Enable BD chain, disable state#}
+    {#                    stateEl.disabled = true;#}
+    {#                    divisionEl.disabled = false;#}
+    {#                    districtEl.disabled = false;#}
+    {#                    subdistrictEl.disabled = false;#}
+    {#                } else if (val) {#}
+    {#                    // Other country: show state, hide BD hierarchy#}
+    {#                    show(stateWrap);#}
+    {#                    hide(divisionWrap);#}
+    {#                    hide(districtWrap);#}
+    {#                    hide(subdistrictWrap);#}
+    {##}
+    {#                    stateEl.disabled = false;#}
+    {#                    divisionEl.disabled = true;#}
+    {#                    districtEl.disabled = true;#}
+    {#                    subdistrictEl.disabled = true;#}
+    {##}
+    {#                    // Clear BD chain values to avoid accidental submission#}
+    {#                    divisionEl.value = '';#}
+    {#                    districtEl.value = '';#}
+    {#                    subdistrictEl.value = '';#}
+    {#                } else {#}
+    {#                    // No country selected: show everything (optional) or keep all enabled#}
+    {#                    show(stateWrap);#}
+    {#                    show(divisionWrap);#}
+    {#                    show(districtWrap);#}
+    {#                    show(subdistrictWrap);#}
+    {##}
+    {#                    stateEl.disabled = false;#}
+    {#                    divisionEl.disabled = false;#}
+    {#                    districtEl.disabled = false;#}
+    {#                    subdistrictEl.disabled = false;#}
+    {#                }#}
+    {#            }#}
+    {##}
+    {#            // Initial toggle on load#}
+    {#            toggleByCountry();#}
+    {##}
+    {#            // Listen for country change#}
+    {#            countryEl.addEventListener('change', toggleByCountry);#}
+    {##}
+    {#            // Dependent dropdowns (existing JSON endpoints):#}
+    {#            // /location/ajax/get-districts/?division_id=...#}
+    {#            // /location/ajax/subdistricts/?district_id=...#}
+    {##}
+    {#            divisionEl.addEventListener('change', function () {#}
+    {#                const divisionId = this.value;#}
+    {#                districtEl.innerHTML = '<option value="">লোড হচ্ছে...</option>';#}
+    {#                subdistrictEl.innerHTML = '<option value="">উপজেলা</option>';#}
+    {#                if (!divisionId) {#}
+    {#                    districtEl.innerHTML = '<option value="">জেলা</option>';#}
+    {#                    return;#}
+    {#                }#}
+    {#                fetch(`/location/ajax/get-districts/?division_id=${divisionId}`)#}
+    {#                    .then(r => r.json())#}
+    {#                    .then(data => {#}
+    {#                        let opts = '<option value="">জেলা</option>';#}
+    {#                        data.forEach(d => {#}
+    {#                            opts += `<option value="${d.id}">${d.name_bn}</option>`;#}
+    {#                        });#}
+    {#                        districtEl.innerHTML = opts;#}
+    {#                    });#}
+    {#            });#}
+    {##}
+    {#            districtEl.addEventListener('change', function () {#}
+    {#                const districtId = this.value;#}
+    {#                subdistrictEl.innerHTML = '<option value="">লোড হচ্ছে...</option>';#}
+    {#                if (!districtId) {#}
+    {#                    subdistrictEl.innerHTML = '<option value="">উপজেলা</option>';#}
+    {#                    return;#}
+    {#                }#}
+    {#                fetch(`/location/ajax/subdistricts/?district_id=${districtId}`)#}
+    {#                    .then(r => r.json())#}
+    {#                    .then(data => {#}
+    {#                        let opts = '<option value="">উপজেলা</option>';#}
+    {#                        data.forEach(s => {#}
+    {#                            opts += `<option value="${s.id}">${s.name_bn}</option>`;#}
+    {#                        });#}
+    {#                        subdistrictEl.innerHTML = opts;#}
+    {#                    });#}
+    {#            });#}
+    {#        });#}
+    {#    </script>#}
+{% endblock %}

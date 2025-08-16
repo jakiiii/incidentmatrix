@@ -17,6 +17,7 @@
                         <table class="table table-hover mb-0">
                             <thead>
                             <tr>
+                                <th>#</th>
                                 <th class="border-top-0">শিরনাম</th>
                                 <th class="border-top-0">ঘটনার ধরণ</th>
                                 <th class="border-top-0">জড়িত ব্যক্তি/গোষ্ঠী/সংগঠন</th>
@@ -28,6 +29,7 @@
                             <tbody>
                             {% for context in incident_context %}
                                 <tr>
+                                    <th scope="row">{{ forloop.counter|add:page_obj.start_index|add:-1 }}</th>
                                     <td>
                                         <a href="{% url 'incident:incident_detail' context.pk %}" class="btn btn-link">{{ context.title }}</a>
                                     </td>
@@ -52,11 +54,9 @@
                         </table>
                     </div>
                     <hr/>
-                    {% include 'snippets/pagination.html' %}
+                    {% include 'pagination.html' %}
                 </div><!--end card-body-->
             </div><!--end card-->
         </div><!--end col-->
     </div>
 {% endblock %}
-
-

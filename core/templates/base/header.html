@@ -11,7 +11,7 @@
                 <!--Zoter-->
                 <!--</a>-->
                 <!-- Image Logo -->
-                <a href="{% url 'home:home' %}" class="logo">
+                <a href="{% if request.user.is_administrator %}{% url 'home:home' %}{% else %}{% url 'terminal:terminal_dashboard' %}{% endif %}" class="logo">
                     <img src="{% static 'assets/images/logo.png' %}" alt="" class="logo-large">
                 </a>
             </div>
@@ -71,14 +71,14 @@
             <div id="navigation">
                 <!-- Navigation Menu-->
                 <ul class="navigation-menu text-center">
-                    {% if reqest.user.is_staff %}
+                    {% if request.user.is_administrator %}
                         <li class="has-submenu ">
                             <a href="{% url 'home:home' %}"><i class="mdi mdi-airplay"></i>Home</a>
                         </li>
                         <li class="has-submenu ">
                             <a href="{% url 'incident:incident_list' %}"><i class="mdi mdi-bullseye"></i>Incidents</a>
                         </li>
-                    {% else %}
+                    {% elif request.user.is_operator %}
                         <li class="has-submenu ">
                             <a href="{% url 'terminal:terminal_dashboard' %}"><i class="mdi mdi-airplay"></i>Dashboard</a>
                         </li>
