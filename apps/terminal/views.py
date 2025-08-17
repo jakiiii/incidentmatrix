@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.views.generic import TemplateView, ListView, CreateView
 
 from django.contrib import messages
@@ -39,6 +40,7 @@ class IncidentCreateView(OperatorRequiredMixin, CreateView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["title"] = "নতুন ইন্সিডেন্ট যুক্ত করুন"
+        ctx['map_key'] = settings.GOOGLE_MAP_KEY
         return ctx
 
     def get_form(self, form_class=None):
@@ -57,8 +59,8 @@ class IncidentCreateView(OperatorRequiredMixin, CreateView):
         form.fields["title"].widget.attrs.update({"class": "form-control", "placeholder": "শিরনাম"})
         form.fields["incident_type"].widget.attrs.update({"class": "custom-select select2"})
         form.fields["involved_actor"].widget.attrs.update({"class": "custom-select select2"})
-        form.fields["latitude"].widget.attrs.update({"class": "form-control", "step": "any"})
-        form.fields["longitude"].widget.attrs.update({"class": "form-control", "step": "any"})
+        form.fields["latitude"].widget.attrs.update({"class": "form-control", "step": "any", "id": "id_latitude"})
+        form.fields["longitude"].widget.attrs.update({"class": "form-control", "step": "any", "id": "id_longitude"})
         form.fields["date"].widget.attrs.update({"class": "form-control", "type": "datetime-local"})
         form.fields["description"].widget.attrs.update({"class": "form-control", "rows": 5, "id": "elm1"})
 

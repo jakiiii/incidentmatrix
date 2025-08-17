@@ -102,10 +102,21 @@
                         </div>
 
                         <!-- Lat/Lng -->
+                        <!-- Lat/Lng -->
                         <div class="form-group row">
                             <label class="col-sm-2 col-form-label">অক্ষাংশ (ল্যাটিচুয়েড)</label>
                             <div class="col-sm-10">
-                                {{ form.latitude }}
+                                <div class="input-group">
+                                    {{ form.latitude }}
+                                    <div class="input-group-append">
+                                        <button type="button" class="btn btn-outline-secondary" id="btnUseMyLocation">
+                                            Use my location
+                                        </button>
+                                        <button type="button" class="btn btn-outline-info" data-toggle="modal"
+                                                data-target="#mapPickerModal">Pick on map
+                                        </button>
+                                    </div>
+                                </div>
                                 {% for e in form.latitude.errors %}
                                     <div class="text-danger">{{ e }}</div>{% endfor %}
                             </div>
@@ -116,6 +127,36 @@
                                 {{ form.longitude }}
                                 {% for e in form.longitude.errors %}
                                     <div class="text-danger">{{ e }}</div>{% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Map Picker Modal (Bootstrap) -->
+                        <div class="modal fade" id="mapPickerModal" tabindex="-1" role="dialog"
+                             aria-labelledby="mapPickerModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-lg" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="mapPickerModalLabel">Pick location on map</h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <!-- Optional place search -->
+                                        <div class="form-group">
+                                            <input id="placeSearch" class="form-control" type="text"
+                                                   placeholder="Search a place...">
+                                        </div>
+                                        <div id="mapPicker" style="width:100%; height: 420px;"></div>
+                                        <small class="text-muted d-block mt-2">Click the map to place/move the
+                                            marker.</small>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" id="btnUseSelectedPoint" class="btn btn-primary"
+                                                data-dismiss="modal">Use selected point
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -151,6 +192,107 @@
             </div>
         </div>
     </div>
+
+    <script>
+        // ============  A) Use my location (Browser Geolocation) ============
+        (function () {
+            const btn = document.getElementById('btnUseMyLocation');
+            if (!btn) return;
+
+            btn.addEventListener('click', function () {
+                if (!navigator.geolocation) {
+                    alert('Geolocation is not supported by your browser.');
+                    return;
+                }
+                btn.disabled = true;
+                btn.textContent = 'Locating...';
+
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        const lat = pos.coords.latitude.toFixed(6);
+                        const lng = pos.coords.longitude.toFixed(6);
+                        const latInput = document.getElementById('id_latitude');
+                        const lngInput = document.getElementById('id_longitude');
+                        if (latInput) latInput.value = lat;
+                        if (lngInput) lngInput.value = lng;
+                        btn.disabled = false;
+                        btn.textContent = 'Use my location';
+                    },
+                    (err) => {
+                        console.error(err);
+                        alert('Unable to retrieve your location. Please allow location permission or use the map picker.');
+                        btn.disabled = false;
+                        btn.textContent = 'Use my location';
+                    },
+                    {enableHighAccuracy: true, timeout: 10000, maximumAge: 0}
+                );
+            });
+        })();
+    </script>
+
+    <!-- ============  B) Google Map Picker (with Places search) ============ -->
+    <script>
+        let map, marker, autocomplete, pickedLatLng;
+
+        function initMapPicker() {
+            const defaultCenter = {lat: 23.6850, lng: 90.3563}; // Bangladesh center
+            map = new google.maps.Map(document.getElementById('mapPicker'), {
+                zoom: 6,
+                center: defaultCenter,
+            });
+
+            marker = new google.maps.Marker({
+                position: defaultCenter,
+                map: map,
+                draggable: true
+            });
+
+            pickedLatLng = defaultCenter;
+
+            // Click to move marker
+            map.addListener('click', (e) => {
+                marker.setPosition(e.latLng);
+                pickedLatLng = {lat: e.latLng.lat(), lng: e.latLng.lng()};
+            });
+
+            // Drag marker to set point
+            marker.addListener('dragend', () => {
+                const pos = marker.getPosition();
+                pickedLatLng = {lat: pos.lat(), lng: pos.lng()};
+            });
+
+            // Places autocomplete
+            const input = document.getElementById('placeSearch');
+            autocomplete = new google.maps.places.Autocomplete(input);
+            autocomplete.addListener('place_changed', () => {
+                const place = autocomplete.getPlace();
+                if (!place.geometry || !place.geometry.location) return;
+                map.panTo(place.geometry.location);
+                map.setZoom(13);
+                marker.setPosition(place.geometry.location);
+                pickedLatLng = {lat: place.geometry.location.lat(), lng: place.geometry.location.lng()};
+            });
+
+            // When modal shows, trigger a map resize so it renders correctly
+            $('#mapPickerModal').on('shown.bs.modal', function () {
+                google.maps.event.trigger(map, 'resize');
+                map.setCenter(marker.getPosition());
+            });
+
+            // Write back to inputs
+            document.getElementById('btnUseSelectedPoint').addEventListener('click', function () {
+                const latInput = document.getElementById('id_latitude');
+                const lngInput = document.getElementById('id_longitude');
+                if (latInput) latInput.value = pickedLatLng.lat.toFixed(6);
+                if (lngInput) lngInput.value = pickedLatLng.lng.toFixed(6);
+            });
+        }
+    </script>
+
+    <!-- Load Google Maps JS with Places library; replace YOUR_KEY -->
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ map_key }}&libraries=places&callback=initMapPicker"
+            async defer></script>
+
 
     <script>
         $(function () {

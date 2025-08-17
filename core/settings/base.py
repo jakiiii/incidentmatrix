@@ -346,6 +346,9 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = 10240
 # maxmind for gio location
 GEOIP_PATH = os.environ.get("GEOIP_PATH")
 
+# GOOGLE MAP API KEY
+GOOGLE_MAP_KEY=os.environ.get("GOOGLE_MAP_KEY")
+
 # Rate limit settings (adjust these values as needed)
 RATE_LIMIT_COUNT = 1000  # Maximum number of requests per RATE_LIMIT_PERIOD
 RATE_LIMIT_PERIOD = 60  # Time window in seconds
