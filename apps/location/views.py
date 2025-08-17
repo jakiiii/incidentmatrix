@@ -1,7 +1,13 @@
 from django.http import JsonResponse
 from apps.location.models import (
-    Division, District, Subdistrict
+    Division, District, Subdistrict, State
 )
+
+
+def get_states_by_country(request):
+    code = (request.GET.get('country_code') or '').upper()
+    rows = State.objects.filter(country=code).order_by('name_bn').values('id', 'name_bn')
+    return JsonResponse(list(rows), safe=False)
 
 
 def get_districts_by_division(request):

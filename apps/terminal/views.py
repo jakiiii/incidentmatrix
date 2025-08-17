@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.urls import reverse_lazy
 
 from apps.terminal.forms import TerminalIncidentCreateForm
-from apps.incident.models import Incident
+from apps.incident.models import Incident, IncidentType, InvolvedActor
 from apps.location.models import Division, District, Subdistrict, State
 
 from core.mixins import OperatorRequiredMixin
@@ -25,6 +25,11 @@ class TerminalView(OperatorRequiredMixin, ListView):
         return context
 
 
+'''
+- relation with state fixed
+- country base incident type and involved actor have to showing
+- automatic lag and long
+'''
 class IncidentCreateView(OperatorRequiredMixin, CreateView):
     model = Incident
     form_class = TerminalIncidentCreateForm
@@ -65,9 +70,26 @@ class IncidentCreateView(OperatorRequiredMixin, CreateView):
 
         # ----- Narrow children by user selections (POST first, then GET) -----
         data = self.request.POST or self.request.GET
+        country_raw = data.get('country')
+        country_code = getattr(country_raw, 'code', country_raw) or ''
+        country_code = str(country_code).upper()
         division_id = data.get("division") or data.get("division_id")
         district_id = data.get("district") or data.get("district_id")
 
+        if country_code and country_code != 'BD':
+            form.fields['state'].queryset = State.objects.filter(country=country_code).order_by('name_bn')
+        elif country_code == 'BD':
+            form.fields['state'].queryset = State.objects.none()  # BD uses division chain
+
+        if country_code:
+            form.fields['incident_type'].queryset = IncidentType.objects.filter(country=country_code).order_by(
+                'name_bn')
+            form.fields['involved_actor'].queryset = InvolvedActor.objects.filter(country=country_code).order_by(
+                'name_bn')
+
+        # Keep your division/district narrowing logic (unchanged)
+        division_id = data.get("division") or data.get("division_id")
+        district_id = data.get("district") or data.get("district_id")
         if division_id:
             form.fields["district"].queryset = District.objects.filter(
                 division_id=division_id

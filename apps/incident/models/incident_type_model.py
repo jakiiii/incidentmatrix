@@ -1,8 +1,16 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from django_countries.fields import CountryField
+
 
 class IncidentType(models.Model):
+    country = CountryField(
+        blank_label="(select country)",
+        null=True,
+        blank=True,
+        verbose_name=_('রাষ্ট্র/দেশ'),
+    )
     name_bn = models.CharField(
         max_length=100,
         verbose_name=_("ঘটনার ধরণ (বাংলা)"),

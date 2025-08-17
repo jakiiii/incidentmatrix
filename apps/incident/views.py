@@ -30,6 +30,18 @@ def parse_custom_date(date_str):
         return None
 
 
+def get_incident_types_by_country(request):
+    code = (request.GET.get('country_code') or '').upper()
+    rows = IncidentType.objects.filter(country=code).order_by('name_bn').values('id', 'name_bn')
+    return JsonResponse(list(rows), safe=False)
+
+
+def get_involved_actors_by_country(request):
+    code = (request.GET.get('country_code') or '').upper()
+    rows = InvolvedActor.objects.filter(country=code).order_by('name_bn').values('id', 'name_bn')
+    return JsonResponse(list(rows), safe=False)
+
+
 class IncidentListView(AdministratorRequiredMixin, ListView):
     model = Incident
     context_object_name = 'incident_context'
