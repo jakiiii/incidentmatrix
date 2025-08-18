@@ -61,3 +61,42 @@ class IncidentCreateView(OperatorRequiredMixin, CreateView):
     def form_invalid(self, form):
         messages.error(self.request, "ফর্মে ত্রুটি আছে, অনুগ্রহ করে ঠিক করুন।")
         return super().form_invalid(form)
+
+
+class IncidentUpdateView(OperatorRequiredMixin, UpdateView):
+    model = Incident
+    form_class = TerminalIncidentCreateForm
+    template_name = "terminal/incident_create.html"  # reuse the same template
+    success_url = reverse_lazy("terminal:terminal_dashboard")
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request  # pass request so the form can narrow querysets
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["title"] = "ইন্সিডেন্ট সম্পাদনা করুন"
+        # existing images for the gallery/checklist
+        ctx["existing_images"] = self.object.incident_images.all()
+        return ctx
+
+    def form_valid(self, form):
+        obj = form.save()
+
+        # Handle newly added images (from the drop area input: name="images")
+        new_files = self.request.FILES.getlist("images")
+        for f in new_files:
+            IncidentImage.objects.create(incident=obj, image=f)
+
+        # Handle deletions (checkboxes named: delete_images)
+        to_delete_ids = self.request.POST.getlist("delete_images")
+        if to_delete_ids:
+            IncidentImage.objects.filter(incident=obj, id__in=to_delete_ids).delete()
+
+        messages.success(self.request, "ইন্সিডেন্ট সফলভাবে হালনাগাদ হয়েছে।")
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        messages.error(self.request, "ফর্মে ত্রুটি আছে, অনুগ্রহ করে ঠিক করুন।")
+        return super().form_invalid(form)
