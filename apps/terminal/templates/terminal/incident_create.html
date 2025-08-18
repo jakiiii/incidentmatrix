@@ -6,9 +6,91 @@
 
 
 {% block content %}
+    <style>
+        /* Off-screen but not display:none, so .click() is allowed */
+        .sr-only-file {
+            position: absolute;
+            left: -9999px;
+            top: -9999px;
+            width: 0.1px;
+            height: 0.1px;
+            opacity: 0;
+            pointer-events: none; /* ok, we trigger via JS */
+        }
+
+        .dz-area {
+            border: 2px dashed #cbd5e0;
+            border-radius: 6px;
+            min-height: 140px;
+            padding: 14px;
+            background: #fafafa;
+            cursor: pointer;
+        }
+
+        .dz-area.dragover {
+            background: #f0f7ff;
+            border-color: #7aa7ff;
+        }
+
+        .dz-instructions {
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+
+        .dz-previews {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .dz-thumb {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #eee;
+            box-shadow: 0 0 0 1px rgba(0, 0, 0, .06) inset;
+        }
+
+        .dz-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .dz-remove {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, .55);
+            color: #fff;
+            border: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
     {% if form.country.errors %}
         <div class="invalid-feedback d-block">
             {{ form.country.errors|striptags }}
+        </div>
+    {% endif %}
+    {% if form.errors %}
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                {% for field in form %}
+                    {% for error in field.errors %}
+                        <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+                {% for error in form.non_field_errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
         </div>
     {% endif %}
     <div class="row">
@@ -181,6 +263,27 @@
                         </div>
 
                         <div class="form-group row">
+                            <label class="col-sm-2 col-form-label">ছবি</label>
+                            <div class="col-sm-10">
+                                <!-- Use a plain input instead of {{ form.images }} -->
+                                <input type="file" id="id_images" name="images" multiple accept=".jpg,.jpeg,.png,.svg"
+                                       class="sr-only-file">
+
+                                <!-- Drop area -->
+                                <div id="dropArea" class="dz-area" role="button" tabindex="0"
+                                     aria-label="ছবি নির্বাচন করুন">
+                                    <div class="dz-instructions">এখানে ছবি ফেলে দিন বা ক্লিক করে নির্বাচন করুন</div>
+                                    <div id="previewGrid" class="dz-previews"></div>
+                                </div>
+
+                                <small class="text-muted d-block mt-2">
+                                    JPG, JPEG, PNG, SVG — একাধিক ছবি যুক্ত করা যাবে।
+                                </small>
+                                <!-- server-side errors can be printed here if you want -->
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
                             <label class="col-sm-2 col-form-label"></label>
                             <div class="col-sm-10">
                                 <button type="submit" class="btn btn-block btn-primary">যুক্ত করুন</button>
@@ -192,6 +295,90 @@
             </div>
         </div>
     </div>
+
+    <script>
+        (function () {
+            const input = document.getElementById('id_images');   // file input
+            const drop = document.getElementById('dropArea');
+            const grid = document.getElementById('previewGrid');
+
+            // Manage a mutable FileList
+            const dt = new DataTransfer();
+
+            function renderPreviews() {
+                grid.innerHTML = '';
+                for (let i = 0; i < dt.files.length; i++) {
+                    const file = dt.files[i];
+                    const url = URL.createObjectURL(file);
+                    const card = document.createElement('div');
+                    card.className = 'dz-thumb';
+                    card.innerHTML = `
+        <img src="${url}" alt="">
+        <button type="button" class="dz-remove" title="Remove" data-index="${i}">✕</button>
+      `;
+                    grid.appendChild(card);
+                }
+            }
+
+            function addFiles(fileList) {
+                const allowed = ['image/jpeg', 'image/png', 'image/svg+xml', 'image/jpg'];
+                Array.from(fileList).forEach(f => {
+                    if (allowed.includes(f.type) || /\.(jpg|jpeg|png|svg)$/i.test(f.name)) {
+                        dt.items.add(f);
+                    }
+                });
+                input.files = dt.files;
+                renderPreviews();
+            }
+
+            function removeAt(index) {
+                const tmp = new DataTransfer();
+                for (let i = 0; i < dt.files.length; i++) {
+                    if (i !== index) tmp.items.add(dt.files[i]);
+                }
+                dt.items.clear();
+                for (let i = 0; i < tmp.files.length; i++) dt.items.add(tmp.files[i]);
+                input.files = dt.files;
+                renderPreviews();
+            }
+
+            // Click drop area to open chooser
+            drop.addEventListener('click', () => input.click());
+            drop.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    input.click();
+                }
+            });
+
+            // From chooser
+            input.addEventListener('change', (e) => addFiles(e.target.files));
+
+            // Drag & drop
+            ['dragenter', 'dragover'].forEach(evt => {
+                drop.addEventListener(evt, e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    drop.classList.add('dragover');
+                }, false);
+            });
+            ['dragleave', 'drop'].forEach(evt => {
+                drop.addEventListener(evt, e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    drop.classList.remove('dragover');
+                }, false);
+            });
+            drop.addEventListener('drop', (e) => addFiles(e.dataTransfer.files));
+
+            // Remove preview
+            grid.addEventListener('click', (e) => {
+                const btn = e.target.closest('.dz-remove');
+                if (!btn) return;
+                removeAt(parseInt(btn.dataset.index, 10));
+            });
+        })();
+    </script>
 
     <script>
         // ============  A) Use my location (Browser Geolocation) ============

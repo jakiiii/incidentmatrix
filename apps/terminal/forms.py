@@ -1,9 +1,9 @@
 from django import forms
+
 from apps.incident.models import Incident
 
 
 class TerminalIncidentCreateForm(forms.ModelForm):
-
     class Meta:
         model = Incident
         fields = [

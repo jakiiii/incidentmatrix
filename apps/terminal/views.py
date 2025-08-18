@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.urls import reverse_lazy
 
 from apps.terminal.forms import TerminalIncidentCreateForm
-from apps.incident.models import Incident, IncidentType, InvolvedActor
+from apps.incident.models import Incident, IncidentType, InvolvedActor, IncidentImage
 from apps.location.models import Division, District, Subdistrict, State
 
 from core.mixins import OperatorRequiredMixin
@@ -26,11 +26,6 @@ class TerminalView(OperatorRequiredMixin, ListView):
         return context
 
 
-'''
-- relation with state fixed
-- country base incident type and involved actor have to showing
-- automatic lag and long
-'''
 class IncidentCreateView(OperatorRequiredMixin, CreateView):
     model = Incident
     form_class = TerminalIncidentCreateForm
@@ -168,9 +163,24 @@ class IncidentCreateView(OperatorRequiredMixin, CreateView):
         if hasattr(obj, "posted_by_id"):
             obj.posted_by = self.request.user
         obj.save()
-        messages.success(self.request, "ইন্সিডেন্ট সফলভাবে যুক্ত হয়েছে।")
+
+        # Save images (multiple)
+        files = self.request.FILES.getlist("images")
+        for f in files:
+            # (validators on IncidentImage will enforce extensions)
+            IncidentImage.objects.create(incident=obj, image=f)
+
+        messages.success(self.request, "ইন্সিডেন্ট সফলভাবে যুক্ত হয়েছে এবং ছবিগুলো সংরক্ষিত হয়েছে।")
         return super().form_valid(form)
 
     def form_invalid(self, form):
+        # Log details in console so you can see *which* fields failed
+        from django.utils.html import strip_tags
+        print("FORM ERRORS (as_text):\n", strip_tags(form.errors.as_text()))
+        print("NON-FIELD ERRORS:\n", strip_tags(form.non_field_errors().as_text()))
         messages.error(self.request, "ফর্মে ত্রুটি আছে, অনুগ্রহ করে ঠিক করুন।")
         return super().form_invalid(form)
+
+    # def form_invalid(self, form):
+    #     messages.error(self.request, "ফর্মে ত্রুটি আছে, অনুগ্রহ করে ঠিক করুন।")
+    #     return super().form_invalid(form)
