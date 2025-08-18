@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+  <div class="card card-body">
+    <h4 class="mb-3">ইন্সিডেন্ট আর্কাইভ করবেন?</h4>
+    <p class="mb-4">আপনি কি নিশ্চিতভাবে "<strong>{{ object.title }}</strong>" আর্কাই ডিলিট করতে চান?</p>
+    <form method="post">
+      {% csrf_token %}
+      <a href="{{ request.META.HTTP_REFERER|default:'/' }}" class="btn btn-secondary">না</a>
+      <button type="submit" class="btn btn-danger">হ্যাঁ <i class="mdi mdi-delete-forever"></i></button>
+    </form>
+  </div>
+{% endblock %}

@@ -1,9 +1,11 @@
 from django.conf import settings
+from django.shortcuts import redirect
 from django.views.generic import TemplateView, ListView, CreateView, UpdateView
 
 from django.contrib import messages
 from django.urls import reverse_lazy
 
+from base.models import BaseModel
 from apps.terminal.forms import TerminalIncidentCreateForm
 from apps.incident.models import Incident, IncidentType, InvolvedActor, IncidentImage
 from apps.location.models import Division, District, Subdistrict, State
@@ -18,7 +20,9 @@ class TerminalView(OperatorRequiredMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        return Incident.objects.filter(posted_by=self.request.user).order_by('-updated_at')
+        return Incident.objects.exclude(
+            status=BaseModel.StatusChoices.ARCHIVED
+        ).filter(posted_by=self.request.user).order_by('-updated_at')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -100,3 +104,20 @@ class IncidentUpdateView(OperatorRequiredMixin, UpdateView):
     def form_invalid(self, form):
         messages.error(self.request, "ফর্মে ত্রুটি আছে, অনুগ্রহ করে ঠিক করুন।")
         return super().form_invalid(form)
+
+
+class IncidentDeleteView(OperatorRequiredMixin, UpdateView):
+    model = Incident
+    # we’ll use a tiny confirm template with a <form> but no model fields
+    fields: list[str] = []
+    template_name = "terminal/incident_confirm_delete.html"
+    success_url = reverse_lazy("terminal:terminal_dashboard")
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        # already archived? just succeed silently
+        if self.object.status != BaseModel.StatusChoices.ARCHIVED:
+            self.object.status = BaseModel.StatusChoices.ARCHIVED
+            self.object.save(update_fields=["status"])
+        messages.success(request, "ইন্সিডেন্টটি আর্কাইভ করা হয়েছে (সফট ডিলিট)।")
+        return redirect(self.get_success_url())

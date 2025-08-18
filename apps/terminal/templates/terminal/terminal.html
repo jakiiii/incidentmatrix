@@ -59,7 +59,11 @@
                                class="btn btn-sm btn-outline-primary">
                                 <i class="mdi mdi-table-edit mdi-24px"></i>
                             </a>
-                            <a href="#" class="btn"><i class="mdi mdi-delete-forever mdi-36px"></i></a>
+                            <a href="#"
+                               class="btn btn-sm btn-danger js-soft-delete"
+                               data-delete-url="{% url 'terminal:incident_delete' pk=context.id %}">
+                                <i class="mdi mdi-delete-forever mdi-24px"></i>
+                            </a>
                         </td>
                     </tr>
                 {% endfor %}
@@ -68,4 +72,50 @@
             {% include 'pagination.html' %}
         </div>
     </div>
+
+    <!-- place once per page (e.g., end of the template) -->
+    <div class="modal fade" id="softDeleteModal" tabindex="-1" role="dialog" aria-labelledby="softDeleteModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <form id="softDeleteForm" method="post">
+                {% csrf_token %}
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="softDeleteModalLabel">নিশ্চিত করুন</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        আপনি কি নিশ্চিতভাবে এই ইন্সিডেন্টটি ডিলিট করতে চান?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">না</button>
+                        <button type="submit" class="btn btn-danger">হ্যাঁ <i class="mdi mdi-delete-forever"></i></button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const modalEl = document.getElementById('softDeleteModal');
+            const formEl = document.getElementById('softDeleteForm');
+
+            document.querySelectorAll('.js-soft-delete').forEach(btn => {
+                btn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    formEl.action = this.dataset.deleteUrl;
+                    // Bootstrap 4/5 show
+                    if (typeof $ !== 'undefined' && $.fn.modal) {
+                        $('#softDeleteModal').modal('show');
+                    } else {
+                        // fallback confirm (if Bootstrap modal not available)
+                        if (confirm('আর্কাইভ (সফট ডিলিট) করতে চান?')) formEl.submit();
+                    }
+                });
+            });
+        });
+    </script>
 {% endblock %}
