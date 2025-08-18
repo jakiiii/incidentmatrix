@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.views.generic import TemplateView, ListView, CreateView
+from django.views.generic import TemplateView, ListView, CreateView, UpdateView
 
 from django.contrib import messages
 from django.urls import reverse_lazy
@@ -38,125 +38,10 @@ class IncidentCreateView(OperatorRequiredMixin, CreateView):
         ctx['map_key'] = settings.GOOGLE_MAP_KEY
         return ctx
 
-    def get_form(self, form_class=None):
-        """
-        Keep ALL display logic, queryset narrowing, and widget setup here.
-        The form class stays thin.
-        """
-        form = super().get_form(form_class)
-
-        # ----- Widgets / classes / ids for JS -----
-        form.fields["country"].widget.attrs.update({"class": "custom-select select2", "id": "id_country"})
-        form.fields["state"].widget.attrs.update({"class": "custom-select select2", "id": "id_state"})
-        form.fields["division"].widget.attrs.update({"class": "custom-select select2", "id": "id_division"})
-        form.fields["district"].widget.attrs.update({"class": "custom-select select2", "id": "id_district"})
-        form.fields["subdistrict"].widget.attrs.update({"class": "custom-select select2", "id": "id_subdistrict"})
-        form.fields["title"].widget.attrs.update({"class": "form-control", "placeholder": "শিরনাম"})
-        form.fields["incident_type"].widget.attrs.update({"class": "custom-select select2"})
-        form.fields["involved_actor"].widget.attrs.update({"class": "custom-select select2"})
-        form.fields["latitude"].widget.attrs.update({"class": "form-control", "step": "any", "id": "id_latitude"})
-        form.fields["longitude"].widget.attrs.update({"class": "form-control", "step": "any", "id": "id_longitude"})
-        form.fields["date"].widget.attrs.update({"class": "form-control", "type": "datetime-local"})
-        form.fields["description"].widget.attrs.update({"class": "form-control", "rows": 5, "id": "elm1"})
-
-        # ----- Default querysets -----
-        form.fields["state"].queryset = State.objects.order_by("name_bn")
-        form.fields["division"].queryset = Division.objects.order_by("name_bn")
-        form.fields["district"].queryset = District.objects.order_by("name_bn")
-        form.fields["subdistrict"].queryset = Subdistrict.objects.order_by("name_bn")
-
-        # ----- Narrow children by user selections (POST first, then GET) -----
-        data = self.request.POST or self.request.GET
-        country_raw = data.get('country')
-        country_code = getattr(country_raw, 'code', country_raw) or ''
-        country_code = str(country_code).upper()
-        division_id = data.get("division") or data.get("division_id")
-        district_id = data.get("district") or data.get("district_id")
-
-        if country_code and country_code != 'BD':
-            form.fields['state'].queryset = State.objects.filter(country=country_code).order_by('name_bn')
-        elif country_code == 'BD':
-            form.fields['state'].queryset = State.objects.none()  # BD uses division chain
-
-        if country_code:
-            form.fields['incident_type'].queryset = IncidentType.objects.filter(country=country_code).order_by(
-                'name_bn')
-            form.fields['involved_actor'].queryset = InvolvedActor.objects.filter(country=country_code).order_by(
-                'name_bn')
-
-        # Keep your division/district narrowing logic (unchanged)
-        division_id = data.get("division") or data.get("division_id")
-        district_id = data.get("district") or data.get("district_id")
-        if division_id:
-            form.fields["district"].queryset = District.objects.filter(
-                division_id=division_id
-            ).order_by("name_bn")
-
-        if district_id:
-            form.fields["subdistrict"].queryset = Subdistrict.objects.filter(
-                district_id=district_id
-            ).order_by("name_bn")
-
-        return form
-
-    # ---- Keep business rules in the view ----
-    def _apply_business_rules(self, form) -> bool:
-        """
-        Rules:
-        - If country == BD → require division/district/subdistrict; forbid state.
-        - Else (non-BD) → require state; forbid division/district/subdistrict.
-        """
-        cleaned = form.cleaned_data
-        country = cleaned.get("country")
-        state = cleaned.get("state")
-        division = cleaned.get("division")
-        district = cleaned.get("district")
-        subdistrict = cleaned.get("subdistrict")
-
-        # country may be a Country object OR a simple string like "BD"
-        country_code = getattr(country, "code", country) or ""  # normalize to string
-        country_code = str(country_code).upper()
-
-        ok = True
-        if not country_code:
-            form.add_error("country", "রাষ্ট্র/দেশ নির্বাচন করুন")
-            return False
-
-        if country_code == "BD":
-            if not division:
-                form.add_error("division", "বিভাগ নির্বাচন করুন");
-                ok = False
-            if not district:
-                form.add_error("district", "জেলা নির্বাচন করুন");
-                ok = False
-            if not subdistrict:
-                form.add_error("subdistrict", "উপজেলা নির্বাচন করুন");
-                ok = False
-            if state:
-                form.add_error("state", "বাংলাদেশের জন্য স্টেট/রাজ্য প্রযোজ্য নয়");
-                ok = False
-        else:
-            if not state:
-                form.add_error("state", "স্টেট/রাজ্য নির্বাচন করুন");
-                ok = False
-            if division:
-                form.add_error("division", "অন্যান্য দেশের জন্য বিভাগ প্রযোজ্য নয়");
-                ok = False
-            if district:
-                form.add_error("district", "অন্যান্য দেশের জন্য জেলা প্রযোজ্য নয়");
-                ok = False
-            if subdistrict:
-                form.add_error("subdistrict", "অন্যান্য দেশের জন্য উপজেলা প্রযোজ্য নয়");
-                ok = False
-
-        return ok
-
-    def post(self, request, *args, **kwargs):
-        self.object = None
-        form = self.get_form()
-        if form.is_valid() and self._apply_business_rules(form):
-            return self.form_valid(form)
-        return self.form_invalid(form)
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request  # pass request into the form
+        return kwargs
 
     def form_valid(self, form):
         obj = form.save(commit=False)
@@ -174,13 +59,5 @@ class IncidentCreateView(OperatorRequiredMixin, CreateView):
         return super().form_valid(form)
 
     def form_invalid(self, form):
-        # Log details in console so you can see *which* fields failed
-        from django.utils.html import strip_tags
-        print("FORM ERRORS (as_text):\n", strip_tags(form.errors.as_text()))
-        print("NON-FIELD ERRORS:\n", strip_tags(form.non_field_errors().as_text()))
         messages.error(self.request, "ফর্মে ত্রুটি আছে, অনুগ্রহ করে ঠিক করুন।")
         return super().form_invalid(form)
-
-    # def form_invalid(self, form):
-    #     messages.error(self.request, "ফর্মে ত্রুটি আছে, অনুগ্রহ করে ঠিক করুন।")
-    #     return super().form_invalid(form)
