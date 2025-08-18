@@ -89,7 +89,8 @@ class LoginView(NextUrlMixin, FormView):
         return reverse('home:home')
 
 
-class CustomPasswordChangeView(RateLimitMixin, LoginRequiredMixin, SuccessMessageMixin, PasswordChangeView):
+# class CustomPasswordChangeView(RateLimitMixin, LoginRequiredMixin, SuccessMessageMixin, PasswordChangeView):
+class CustomPasswordChangeView(LoginRequiredMixin, SuccessMessageMixin, PasswordChangeView):
     form_class = CustomPasswordChangeForm
     template_name = 'accounts/password_change.html'
     success_message = "Your password was successfully updated!"
@@ -138,7 +139,6 @@ class LogoutView(View):
 
         # Delete the otp_verified cookie
         response.delete_cookie('otp_verified')
-
         return response
 
 

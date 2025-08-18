@@ -39,7 +39,9 @@
                 {% for context in incident_context %}
                     <tr>
                         <th scope="row">{{ forloop.counter|add:page_obj.start_index|add:-1 }}</th>
-                        <td>{{ context.title }}</td>
+                        <td>
+                            <a href="{% url 'terminal:incident_update' pk=context.id %}" class="font-weight-bold">{{ context.title }}</a>
+                        </td>
                         <td>{{ context.country.name }}</td>
                         <td>
                             {% if context.country == "BD" %}
@@ -59,7 +61,7 @@
                                class="btn btn-sm btn-outline-primary">
                                 <i class="mdi mdi-table-edit mdi-24px"></i>
                             </a>
-                            <a href="#"
+                            <a href=""
                                class="btn btn-sm btn-danger js-soft-delete"
                                data-delete-url="{% url 'terminal:incident_delete' pk=context.id %}">
                                 <i class="mdi mdi-delete-forever mdi-24px"></i>
